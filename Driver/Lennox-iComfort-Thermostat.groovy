@@ -29,6 +29,7 @@
 		capability "Actuator"
 	        
 		attribute "thermostatProgram", "string"
+		attribute "presence", "string"
 	        
 		command "heatLevelUp"
 		command "heatLevelDown"
@@ -43,109 +44,9 @@
 		command "setPresence"
 		command "updateThermostatData", ["string"]
 	}
-
-	simulator { }
-
-	tiles {
-		valueTile("temperature", "device.temperature", width: 2, height: 2) {
-			state("temperature", label:'${currentValue}°', 
-				backgroundColors:[
-					[value: 31, color: "#153591"],
-					[value: 44, color: "#1e9cbb"],
-					[value: 59, color: "#90d2a7"],
-					[value: 74, color: "#44b621"],
-					[value: 84, color: "#f1d801"],
-					[value: 95, color: "#d04e00"],
-					[value: 96, color: "#bc2323"]
-				]		
-			)
-		}
-		valueTile("humidity", "device.humidity", inactiveLabel: false) {
-			state("humidity", label:'${currentValue}% \nHumidity' , unit: "Humidity",
-				backgroundColors:[
-					[value: 20, color: "#b2d3f9"],
-					[value: 30, color: "#99c5f8"],
-					[value: 35, color: "#7fb6f6"],
-					[value: 40, color: "#66a8f4"],
-					[value: 45, color: "#4c99f3"],
-					[value: 50, color: "#328bf1"],
-					[value: 55, color: "#197cef"],
-					[value: 60, color: "#006eee"],
-					[value: 70, color: "#0063d6"],
-				]
-			)
-		}
-		standardTile("thermostatOperatingState", "device.thermostatOperatingState", canChangeIcon: false, decoration: "flat") {
-			state("idle",            icon: "st.thermostat.ac.air-conditioning", label: "Idle")
-			state("waiting",         icon: "st.thermostat.ac.air-conditioning", label: "Waiting")
-			state("heating",         icon: "st.thermostat.heating")
-			state("cooling",         icon: "st.thermostat.cooling")
-			state("emergency heat",  icon: "st.thermostat.emergency-heat")
-			
-		}
-		standardTile("thermostatMode", "device.thermostatMode", canChangeIcon: false, inactiveLabel: false, decoration: "flat") {
-			state("auto",      action:"switchMode",    nextState: "auto",      icon: "st.thermostat.auto")
-			state("heat",      action:"switchMode",    nextState: "heat",      icon: "st.thermostat.heat")
-			state("cool",      action:"switchMode",    nextState: "cool",      icon: "st.thermostat.cool")
-			state("off",       action:"switchMode",    nextState: "off",       icon: "st.thermostat.heating-cooling-off")
-			state("emergency heat",       action:"switchMode",    nextState: "emergency heat",       icon: "st.thermostat.emergency-heat")
-			state("program",   action:"switchMode",    nextState: "program",   icon: "st.thermostat.ac.air-conditioning", label: "Program")
-		}
-		standardTile("thermostatFanMode", "device.thermostatFanMode", canChangeIcon: false, inactiveLabel: false, decoration: "flat") {
-			state("auto",      action:"switchFanMode", nextState: "auto",       icon: "st.thermostat.fan-auto")
-			state("on",        action:"switchFanMode", nextState: "on",         icon: "st.thermostat.fan-on")
-			state("circulate", action:"switchFanMode", nextState: "circulate",  icon: "st.thermostat.fan-circulate")
-			state("off",       action:"switchFanMode", nextState: "off",        icon: "st.thermostat.fan-off")
-		}
-		standardTile("heatLevelUp", "device.switch", canChangeIcon: false, inactiveLabel: true, decoration: "flat" ) {
-			state("heatLevelUp",   action:"heatLevelUp",   icon:"st.thermostat.thermostat-up", backgroundColor:"#F7C4BA")
-		}        
-		valueTile("heatingSetpoint", "device.heatingSetpoint", inactiveLabel: false) {
-			state("heat", label:'${currentValue}°',
-				backgroundColors:[
-					[value: 40, color: "#f49b88"],
-					[value: 50, color: "#f28770"],
-					[value: 60, color: "#f07358"],
-					[value: 70, color: "#ee5f40"],
-					[value: 80, color: "#ec4b28"],
-					[value: 90, color: "#ea3811"]
-				]
-			)
-		}
-		standardTile("heatLevelDown", "device.switch", canChangeIcon: false, inactiveLabel: true, decoration: "flat") {
-			state("heatLevelDown", action:"heatLevelDown", icon:"st.thermostat.thermostat-down", backgroundColor:"#F7C4BA")
-		}        
-		standardTile("coolLevelUp", "device.switch", canChangeIcon: false, inactiveLabel: true, decoration: "flat" ) {
-			state("coolLevelUp",   action:"coolLevelUp",   icon:"st.thermostat.thermostat-up" , backgroundColor:"#BAEDF7")
-		}
-		valueTile("coolingSetpoint", "device.coolingSetpoint", inactiveLabel: false) {
-			state("cool", label:'${currentValue}°',
-				backgroundColors:[
-					[value: 40, color: "#88e1f4"],
-					[value: 50, color: "#70dbf2"],
-					[value: 60, color: "#58d5f0"],
-					[value: 70, color: "#40cfee"],
-					[value: 80, color: "#28c9ec"],
-					[value: 90, color: "#11c3ea"]
-				]
-			)
-		}
-		standardTile("coolLevelDown", "device.switch", canChangeIcon: false, inactiveLabel: true, decoration: "flat") {
-			state("coolLevelDown", action:"coolLevelDown", icon:"st.thermostat.thermostat-down", backgroundColor:"#BAEDF7")
-		}
-		valueTile("thermostatProgram", "device.thermostatProgram", inactiveLabel: false, decoration: "flat") {
-			state("program", action:"switchProgram", label: '${currentValue}')
-		}
-		standardTile("refresh", "device.switch", inactiveLabel: false, decoration: "flat") {
-			state("default", action:"refresh.refresh",        icon:"st.secondary.refresh")
-		}
-		standardTile("presence", "device.presence", inactiveLabel: false, decoration: "flat") { 
-			state("present", label:"present", action:"switchPresenceMode", nextState: "present", icon: "st.Home.home2")
-			state("away", label:"away", action:"switchPresenceMode", nextState: "away", icon: "st.Transportation.transportation5")
-		} 
-        
-       	main "temperature"
-		details(["temperature", "humidity", "thermostatOperatingState",  "heatLevelUp", "coolLevelUp", "thermostatFanMode", "heatingSetpoint", "coolingSetpoint", "thermostatMode", "heatLevelDown", "coolLevelDown", "thermostatProgram", "presence", "refresh" ])
+	
+	preferences {
+		input "isDebugEnabled", "bool", title: "Enable Debugging?", defaultValue: false
 	}
 }
 
@@ -160,11 +61,11 @@ def updateThermostatData(thermostatData) {
 	def thermostatProgramSelection
 	def thermostatProgramMode = (device.currentValue("thermostatProgram") == "Manual")?"0":"1"
 	def thermostatMode = (device.currentState("thermostatMode")?.value)?device.currentState("thermostatMode")?.value:"auto"
-    log.debug "UpdateThermostatData: " + thermostatData
+    logDebug "UpdateThermostatData: " + thermostatData
 	thermostatData.each { name, value -> 
 		if (name == "temperature" || name == "coolingSetpoint" || name == "heatingSetpoint") {
 			sendEvent(name: name, value: value , unit: getTemperatureScale())
-			log.debug "Sending Event: " + [name, value, getTemperatureScale()]
+			logDebug "Sending Event: " + [name, value, getTemperatureScale()]
 		} else if (name == "thermostatProgramMode") {
 			thermostatProgramMode = value
             ValChanged = true
@@ -175,16 +76,14 @@ def updateThermostatData(thermostatData) {
 			thermostatMode = value
             ValChanged = true
 		} else if (name == "awayMode") {
-			if (value == "1") {
-				sendEvent(name: "presence", value: "away")
-                log.debug "Sending Event: " + ["presence", "away"]
-			} else {
-				sendEvent(name: "presence", value: "present")
-                log.debug "Sending Event: " + ["presence", "present"]
+			def awayMode = (value == "1") ? "away" : "present"
+			if (device.currentValue("presence") != awayMode) {
+				sendEvent(name: "presence", value: awayMode)
+                logDebug "Sending Event: " + ["presence", awayMode]
 			}
 		} else {
 			sendEvent(name: name, value: value, displayed: false)
-			log.debug "Sending Misc Event: " + [name, value]
+			logDebug "Sending Misc Event: " + [name, value]
 		}
 	}
 
@@ -192,14 +91,14 @@ def updateThermostatData(thermostatData) {
         if (thermostatProgramMode == "0") {
             sendEvent(name: "thermostatMode", value: thermostatMode)
             sendEvent(name: "thermostatProgram", value: "Manual")
-            log.debug "Sending Event: " + ["thermostatMode", thermostatMode]
-            log.debug "Sending Event: " + ["thermostatProgram", "Manual"]			
+            logDebug "Sending Event: " + ["thermostatMode", thermostatMode]
+            logDebug "Sending Event: " + ["thermostatProgram", "Manual"]			
         } else {
             sendEvent(name: "thermostatMode", value: "program") 
-            log.debug "Sending Event: " + ["thermostatMode", "program"]
+            logDebug "Sending Event: " + ["thermostatMode", "program"]
             if (thermostatProgramSelection) {
                 sendEvent(name: "thermostatProgram", value: parent.getThermostatProgramName(this.device, thermostatProgramSelection).toString().replaceAll("\r","").replaceAll("\n",""))
-                log.debug "Sending Event: " + ["thermostatProgram", parent.getThermostatProgramName(this.device, thermostatProgramSelection).replaceAll("\r","").replaceAll("\n","")]
+                logDebug "Sending Event: " + ["thermostatProgram", parent.getThermostatProgramName(this.device, thermostatProgramSelection).replaceAll("\r","").replaceAll("\n","")]
             }
         }
     }
@@ -354,7 +253,13 @@ def switchPresenceMode() {
 def setPresence(awayStatus) {
 	def awayMode = (awayStatus.toString().equals("away"))?1:0
 	updateThermostatData([awayMode: awayMode.toString()])
-    log.debug "Calling setAway:" + this.device + " " + awayStatus + " " + awayMode.toString()
+    logDebug "Calling setAway:" + this.device + " " + awayStatus + " " + awayMode.toString()
 	def thermostatResult = parent.setAway(this.device, awayStatus)
 	updateThermostatData(thermostatResult)   
+}
+
+private logDebug(msg) {
+	if (isDebugEnabled != false) {
+		log.debug "$msg"
+	}
 }
