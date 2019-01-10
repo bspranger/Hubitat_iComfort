@@ -44,6 +44,7 @@ def prefLogIn() {
 		} 
 		section("Advanced Options"){
 			input(name: "polling", title: "Server Polling (in Minutes)", type: "int", description: "in minutes", defaultValue: "5" )
+			input "isDebugEnabled", "bool", title: "Enable Debugging?", defaultValue: false
 			//paragraph "This option enables author to troubleshoot if you have problem adding devices. It allows the app to send information exchanged with iComfort server to the author. DO NOT ENABLE unless you have contacted author at jason@copyninja.net"
 			//input(name:"troubleshoot", title: "Troubleshoot", type: "boolean")
 		}            
@@ -255,7 +256,7 @@ private apiGet(apiPath, apiParams = [], callback = {}) {
 	try {
 		httpGet(apiParams) { response -> callback(response) }
 	} catch (Error e)	{
-		log.debug "API Error: $e"
+		logDebug "API Error: $e"
 	}
 }
 
@@ -263,12 +264,12 @@ private apiGet(apiPath, apiParams = [], callback = {}) {
 private apiPut(apiPath, apiParams = [], callback = {}) {    
 	// set up final parameters
 	apiParams = [ uri: getApiURL(), path: apiPath, headers: [Authorization: getApiAuth()] ] + apiParams
-	log.debug "apiParams: $apiParams"
+	logDebug "apiParams: $apiParams"
 
 	try {
 		httpPut(apiParams) { response -> callback(response) }
 	} catch (Error e) {
-		log.debug "API Error: $e"
+		logDebug "API Error: $e"
 	}
 }
 
@@ -276,7 +277,7 @@ private apiPut(apiPath, apiParams = [], callback = {}) {
 private updateDeviceChildData(device) {
 	apiGet("/DBAcessService.svc/GetTStatInfoList", [query: [GatewaySN: getDeviceGatewaySN(device), TempUnit: (getTemperatureScale()=="F")?0:1, Cancel_Away: "-1"]]) { response ->
 		if (response.status == 200) {
-			log.debug "updateDeviceChildData: $response.data"
+			logDebug "updateDeviceChildData: $response.data"
 			response.data.tStatInfo.each { 
 				def dni = [ app.id, it.GatewaySN, it.Zone_Number ].join('|')
 				state.data[dni] = [
@@ -325,7 +326,7 @@ def lookupInfo( lookupName, lookupValue, lookupMode ) {
 /* for SmartDevice to call */
 // Refresh data
 def refresh() {
-	log.info "Refreshing data..."
+	//log.info "Refreshing data..."
 		
 	// update data for child devices
 	getAllChildDevices().each { (!updateDeviceChildData(it))?:it.updateThermostatData(state.data[it.deviceNetworkId.toString()]) }
@@ -526,4 +527,10 @@ def getApiURL() {
 //API Authorization header
 def getApiAuth() {
 	return "Basic " + (settings.username + ":" + settings.password).bytes.encodeBase64()
+}
+
+private logDebug(msg) {
+	if (isDebugEnabled != false) {
+		log.debug "$msg"
+	}
 }
