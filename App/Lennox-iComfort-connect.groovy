@@ -52,8 +52,8 @@ def prefLogIn() {
 }
 
 def prefListDevice() {
-	LoginResult = loginCheck()
-	if (LoginResult) 
+	def loginResult = loginCheck()
+	if (loginResult) 
 	{
 		def thermostatList = getThermostatList()
 		if (thermostatList) {
