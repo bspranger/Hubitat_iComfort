@@ -43,7 +43,7 @@ def prefLogIn() {
 			input("password", "password", title: "Password", description: "iComfort password (case sensitive)")
 		} 
 		section("Advanced Options"){
-			input(name: "polling", title: "Server Polling (in Minutes)", type: "int", description: "in minutes", defaultValue: "5" )
+			input(name: "polling", title: "Server Polling (in Minutes)", type: "number", description: "in minutes", defaultValue: "5" )
 			input "isDebugEnabled", "bool", title: "Enable Debugging?", defaultValue: false
 			//paragraph "This option enables author to troubleshoot if you have problem adding devices. It allows the app to send information exchanged with iComfort server to the author. DO NOT ENABLE unless you have contacted author at jason@copyninja.net"
 			//input(name:"troubleshoot", title: "Troubleshoot", type: "boolean")
