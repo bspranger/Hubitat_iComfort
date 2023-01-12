@@ -43,17 +43,14 @@ def prefLogIn() {
 			input("password", "password", title: "Password", description: "iComfort password (case sensitive)")
 		} 
 		section("Advanced Options"){
-			input(name: "polling", title: "Server Polling (in Minutes)", type: "int", description: "in minutes", defaultValue: "5" )
 			input "isDebugEnabled", "bool", title: "Enable Debugging?", defaultValue: false
-			//paragraph "This option enables author to troubleshoot if you have problem adding devices. It allows the app to send information exchanged with iComfort server to the author. DO NOT ENABLE unless you have contacted author at jason@copyninja.net"
-			//input(name:"troubleshoot", title: "Troubleshoot", type: "boolean")
 		}            
 	}
 }
 
 def prefListDevice() {
-	def loginResult = loginCheck()
-	if (loginResult) 
+	def LoginResult = loginCheck()
+	if (LoginResult) 
 	{
 		def thermostatList = getThermostatList()
 		if (thermostatList) {
@@ -158,6 +155,7 @@ private getThermostatList() {
     
 	//Get Thermostat Mode lookups
 	apiGet("/DBAcessService.svc/GetTstatLookupInfo", [query: [name: "Operation_Mode", langnumber: 0]]) { response ->
+		logDebug "ThermostatModes: $response"
 		response.data.tStatlookupInfo.each {
 			state.lookup.thermostatMode.putAt(it.value.toString(), translateDesc(it.description))
 		}
@@ -251,19 +249,21 @@ private getThermostatList() {
 // HTTP GET call
 private apiGet(apiPath, apiParams = [], callback = {}) {	
 	// set up parameters
-	apiParams = [ uri: getApiURL(), path: apiPath, headers: [Authorization : getApiAuth()] ] + apiParams
+	apiParams = [ uri: getApiURL(), path: apiPath, headers: [Authorization : getApiAuth()], ignoreSSLIssues: true ] + apiParams 
 	
 	try {
 		httpGet(apiParams) { response -> callback(response) }
 	} catch (Error e)	{
 		logDebug "API Error: $e"
-	}
+	} catch (java.net.SocketTimeoutException e) {
+        log.warn "Lennox connection timed out"
+    }
 }
 
 // HTTP PUT call
 private apiPut(apiPath, apiParams = [], callback = {}) {    
 	// set up final parameters
-	apiParams = [ uri: getApiURL(), path: apiPath, headers: [Authorization: getApiAuth()] ] + apiParams
+	apiParams = [ uri: getApiURL(), path: apiPath, headers: [Authorization: getApiAuth()], ignoreSSLIssues: true ] + apiParams
 	logDebug "apiParams: $apiParams"
 
 	try {
@@ -300,6 +300,7 @@ private updateDeviceChildData(device) {
 
 // lookup value translation
 def lookupInfo( lookupName, lookupValue, lookupMode ) {
+	//logDebug "State info: $state"
 	if (lookupName == "thermostatFanMode") {
 		if (lookupMode) {
 			return state.lookup.thermostatFanMode.getAt(lookupValue.toString())
