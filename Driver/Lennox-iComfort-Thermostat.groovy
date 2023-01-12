@@ -21,15 +21,29 @@
  metadata {
 	definition (name: "Lennox iComfort Thermostat", namespace: "bspranger", author: "Brian Spranger") {
 		capability "Thermostat"
-		capability "Relative Humidity Measurement"
+		//capability "ThermostatSetpoint"
+		capability "RelativeHumidityMeasurement"
 		capability "Polling"
 		capability "Refresh"
-		capability "Sensor"
-		capability "Temperature Measurement"
-		capability "Actuator"
+		//capability "Sensor"
+		capability "TemperatureMeasurement"
+		//capability "Actuator"
 	        
 		attribute "thermostatProgram", "string"
 		attribute "presence", "string"
+        
+        attribute "coolingSetpoint", "number"
+        attribute "heatingSetpoint", "number"
+        //attribute "schedule", "JSON_OBJECT"
+        attribute "supportedThermostatFanModes", "ENUM"
+        attribute "supportedThermostatModes", "ENUM"
+        attribute "temperature", "number"
+        attribute "thermostatFanMode", "ENUM"
+        attribute "thermostatMode", "ENUM"
+        attribute "thermostatOperatingState", "ENUM"
+        attribute "thermostatSetpoint", "number"
+        attribute "hysteresis", "number"
+        
 	        
 		command "heatLevelUp"
 		command "heatLevelDown"
@@ -52,7 +66,21 @@
 
 def parse(String description) { }
 
-def refresh() { parent.refresh() }
+def refresh() {
+	sendEvent(name: "supportedThermostatFanModes", value: ["auto","circulate","on"])
+	sendEvent(name: "supportedThermostatModes", value: ["auto","cool","heat","off"])
+    sendEvent(name: "hysteresis", value: 0.1)
+    if (device.currentValue("thermostatOperatingState") == "heating")
+    {
+        sendEvent(name: "thermostatSetpoint", value: device.currentValue("heatingSetpoint"))
+    }
+    else if (device.currentValue("thermostatOperatingState") == "cooling")
+    {
+        sendEvent(name: "thermostatSetpoint", value: device.currentValue("coolingSetpoint"))
+    }
+    sendEvent(name: "schedule", value: "Normal")
+	parent.refresh() 
+}
 
 def poll() { updateThermostatData(parent.getDeviceStatus(this.device)) }
 
@@ -94,8 +122,10 @@ def updateThermostatData(thermostatData) {
             logDebug "Sending Event: " + ["thermostatMode", thermostatMode]
             logDebug "Sending Event: " + ["thermostatProgram", "Manual"]			
         } else {
-            sendEvent(name: "thermostatMode", value: "program") 
-            logDebug "Sending Event: " + ["thermostatMode", "program"]
+            //sendEvent(name: "thermostatMode", value: "program") 
+            //logDebug "Sending Event: " + ["thermostatMode", "program"]
+			sendEvent(name: "thermostatMode", value: thermostatMode)
+			logDebug "Sending Event: " + ["thermostatMode", thermostatMode]
             if (thermostatProgramSelection) {
                 sendEvent(name: "thermostatProgram", value: parent.getThermostatProgramName(this.device, thermostatProgramSelection).toString().replaceAll("\r","").replaceAll("\n",""))
                 logDebug "Sending Event: " + ["thermostatProgram", parent.getThermostatProgramName(this.device, thermostatProgramSelection).replaceAll("\r","").replaceAll("\n","")]
@@ -158,11 +188,11 @@ def switchMode() {
 	if(!currentMode) { setThermostatMode("auto") }
 }
 
-def off()           { setThermostatMode("off") }
-def heat()          { setThermostatMode("heat") }
-def emergencyHeat() { setThermostatMode("emergency heat") }
-def cool()          { setThermostatMode("cool") }
 def auto()          { setThermostatMode("auto") }
+def cool()          { setThermostatMode("cool") }
+def emergencyHeat() { setThermostatMode("emergency heat") }
+def heat()          { setThermostatMode("heat") }
+def off()           { setThermostatMode("off") }
 
 def switchFanMode() {
 	def currentFanMode = device.currentState("thermostatFanMode")?.value
@@ -194,26 +224,37 @@ def setThermostatMode(mode) {
 		setThermostatData([ thermostatMode: mode ])
 	}
 }
-def fanOff()       { setThermostatFanMode("off")}
-def fanOn()        { setThermostatFanMode("on") }
+
 def fanAuto()      { setThermostatFanMode("auto") }
 def fanCirculate() { setThermostatFanMode("circulate") }
+def fanOn()        { setThermostatFanMode("on") }
+def fanOff()       { setThermostatFanMode("off")}
+
+def setSchedule(RequestedSchedule)
+{
+	
+}
+
 def setThermostatFanMode(fanMode) {	setThermostatData([ thermostatFanMode: fanMode ]) }
 def heatLevelUp() {	
 	def heatingSetpoint = device.currentValue("heatingSetpoint")
 	setHeatingSetpoint(parent.getTemperatureNext(heatingSetpoint, 1))   
+    refresh()
 }
 def heatLevelDown() { 
 	def heatingSetpoint = device.currentValue("heatingSetpoint")
 	setHeatingSetpoint(parent.getTemperatureNext(heatingSetpoint, -1))  
+    refresh()
 }
 def coolLevelUp() { 
 	def coolingSetpoint = device.currentValue("coolingSetpoint")
 	setCoolingSetpoint(parent.getTemperatureNext(coolingSetpoint, 1))  
+    refresh()
 }
 def coolLevelDown() { 
 	def coolingSetpoint = device.currentValue("coolingSetpoint")
 	setCoolingSetpoint(parent.getTemperatureNext(coolingSetpoint, -1))  
+    refresh()
 }
 
 def switchProgram() {
