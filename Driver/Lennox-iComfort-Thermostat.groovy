@@ -61,6 +61,8 @@
 	
 	preferences {
 		input "isDebugEnabled", "bool", title: "Enable Debugging?", defaultValue: false
+        	input(name:"logInfo",type:"bool",title: "Enable Info logging",required: true,defaultValue: true)
+
 	}
 }
 
@@ -79,6 +81,20 @@ def refresh() {
         sendEvent(name: "thermostatSetpoint", value: device.currentValue("coolingSetpoint"))
     }
     sendEvent(name: "schedule", value: "Normal")
+	parent.refresh() 
+}
+
+def updateSetpoint() {
+    def thermostatMode = (device.currentState("thermostatMode")?.value)?device.currentState("thermostatMode")?.value:"auto"
+
+	if (thermostatMode == "heat")
+    {
+        sendEvent(name: "thermostatSetpoint", value: device.currentValue("heatingSetpoint"))
+    }
+    else if (themostatMode == "cool")
+    {
+        sendEvent(name: "thermostatSetpoint", value: device.currentValue("coolingSetpoint"))
+    }
 	parent.refresh() 
 }
 
@@ -147,6 +163,7 @@ def setHeatingSetpoint(Number heatingSetpoint) {
 	def coolingSetpoint = device.currentValue("coolingSetpoint")
 	coolingSetpoint = (heatSetpointDiff > coolingSetpoint)? heatSetpointDiff : coolingSetpoint   
 	setThermostatData([coolingSetpoint: coolingSetpoint, heatingSetpoint: heatingSetpoint])
+    updateSetpoint()
 }
 
 def setCoolingSetpoint(Number coolingSetpoint) { 
@@ -162,6 +179,7 @@ def setCoolingSetpoint(Number coolingSetpoint) {
 	def heatingSetpoint = device.currentValue("heatingSetpoint")
 	heatingSetpoint = (coolSetpointDiff < heatingSetpoint)? coolSetpointDiff : heatingSetpoint
 	setThermostatData([coolingSetpoint: coolingSetpoint, heatingSetpoint: heatingSetpoint])
+    updateSetpoint()
 }
 
 def switchMode() {
@@ -235,7 +253,10 @@ def setSchedule(RequestedSchedule)
 	
 }
 
-def setThermostatFanMode(fanMode) {	setThermostatData([ thermostatFanMode: fanMode ]) }
+def setThermostatFanMode(fanMode) {	setThermostatData([ thermostatFanMode: fanMode ])
+    logInfo "Setting fanMode " + fanMode 
+}
+
 def heatLevelUp() {	
 	def heatingSetpoint = device.currentValue("heatingSetpoint")
 	setHeatingSetpoint(parent.getTemperatureNext(heatingSetpoint, 1))   
@@ -271,8 +292,10 @@ def setThermostatProgram(programID) {
 
 def setThermostatData(thermostatData) {
 	updateThermostatData(thermostatData)
+    logInfo "Set: $thermostatData"
 	def thermostatResult = parent.setThermostat(this.device, thermostatData)
 	updateThermostatData(thermostatResult)
+    logInfo "Result: $thermostatResult"
 }
 
 def away() { setPresence("away") } 
@@ -295,6 +318,7 @@ def setPresence(awayStatus) {
 	def awayMode = (awayStatus.toString().equals("away"))?1:0
 	updateThermostatData([awayMode: awayMode.toString()])
     logDebug "Calling setAway:" + this.device + " " + awayStatus + " " + awayMode.toString()
+    logInfo "Calling setAway:" + this.device + " " + awayStatus + " " + awayMode.toString()
 	def thermostatResult = parent.setAway(this.device, awayStatus)
 	updateThermostatData(thermostatResult)   
 }
@@ -303,4 +327,9 @@ private logDebug(msg) {
 	if (isDebugEnabled != false) {
 		log.debug "$msg"
 	}
+}
+private logInfo(msg) {
+    if (logInfo)     { 
+        log.info "Thermostat: $msg"
+    }
 }
